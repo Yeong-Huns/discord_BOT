@@ -8,11 +8,12 @@
  * 2024-09-26        Yeong-Huns       최초 생성
  */
 require('dotenv').config();
-const { Client, GatewayIntentBits, Partials } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
+const {Client, GatewayIntentBits, Partials} = require('discord.js');
+const {joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus} = require('@discordjs/voice');
 const gTTS = require('gtts');
 const fs = require('fs');
 const path = require('path');
+const {v4: uuidv4} = require('uuid');
 
 const client = new Client({
 	intents: [
@@ -34,20 +35,35 @@ function limitRepeatingCharacters(text, maxRepeats = 5) {
 	return text.replace(/(.)\1{4,}/g, (match, char) => char.repeat(maxRepeats));
 }
 
+function deleteChannelMessage(voiceChannel){
+	fs.readdir(__dirname, (err, files) => {
+		if (err) throw err;
+
+		files.forEach(file => {
+			if (file.endsWith('.mp3') && file.startsWith(voiceChannel)) {
+				fs.unlink(path.join(__dirname, file), (err) => {
+					if (err) throw err;
+				});
+			}
+		});
+	});
+}
+
 async function processQueue() {
+	const voiceChannelId = currentConnection.joinConfig.channelId;
 	if (isPlaying || messageQueue.length === 0) return;
 
-	const { message, text } = messageQueue.shift();
+	const {message, text} = messageQueue.shift();
 	isPlaying = true;
 
 	const tts = new gTTS(text, 'ko');
-	const filePath = path.join(__dirname, 'tts_output.mp3');
+	const filePath = path.join(__dirname, `${voiceChannelId}_${uuidv4()}.mp3`);
 
 	tts.save(filePath, async (err) => {
 		if (err) {
 			console.error('TTS 파일 생성 중 오류가 발생했습니다:', err);
 			isPlaying = false;
-			await processQueue();
+			processQueue();
 			return;
 		}
 
@@ -62,14 +78,21 @@ async function processQueue() {
 				if (fs.existsSync(filePath)) {
 					fs.unlinkSync(filePath);
 				}
+				const voiceChannelId = currentConnection.joinConfig.channelId;
+				const channel = client.channels.cache.get(voiceChannelId);
 
+				if (channel && channel.members.size === 1) {
+					console.log('음성 채널에 아무도 없어서 봇이 나갔습니다.');
+					currentConnection.destroy();
+					currentConnection = null;
+				}
 				isPlaying = false;
 				processQueue();
 			});
 		} else {
 			message.reply('음성 채널에 연결되어 있지 않습니다.');
 			isPlaying = false;
-			await processQueue();
+			processQueue();
 		}
 	});
 }
@@ -82,7 +105,7 @@ client.on('messageCreate', async (message) => {
 	if (message.author.bot) return;
 
 
-	if(message.content === '-만든놈') message.channel.send('김영훈');
+	if (message.content === '-만든놈') message.channel.send('김영훈');
 	if (message.content === '-핑') message.channel.send('퐁!');
 	if (message.content === '-인사') message.channel.send('안녕하세요! 헤실봇 인사 테스트입니다!');
 	if (message.content === '-도움') message.channel.send(`제가 인식하는 명령어는 다음과 같습니다:
@@ -115,7 +138,7 @@ client.on('messageCreate', async (message) => {
 	}
 
 
-	const commands = ['-음성', '-TTS' , '-기계성대'];
+	const commands = ['-음성', '-TTS', '-기계성대'];
 	if (commands.includes(message.content)) {
 		const voiceChannel = message.member.voice.channel;
 		if (!voiceChannel) {
@@ -139,11 +162,18 @@ client.on('messageCreate', async (message) => {
 	if (currentConnection && !message.author.bot) {
 		const text = limitRepeatingCharacters(message.content);
 		messageQueue.push({message, text});
-		await processQueue();
+		if (!isPlaying) processQueue();
 	}
 
 	if (message.content === '-종료' || message.content === '-나가' || message.content === '-그만') {
 		if (currentConnection) {
+			const voiceChannel = currentConnection.joinConfig.channelId;
+
+			messageQueue = [];
+			isPlaying = false;
+
+			deleteChannelMessage(voiceChannel)
+
 			currentConnection.destroy();
 			currentConnection = null;
 			message.reply('음성 지원을 종료하고, 채널을 떠납니다.');
@@ -159,6 +189,11 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 		const channel = client.channels.cache.get(voiceChannel);
 
 		if (channel && channel.members.size === 1) {  // 봇만 남아있으면 나가기
+			messageQueue = [];
+			isPlaying = false;
+
+			deleteChannelMessage(voiceChannel);
+
 			currentConnection.destroy();
 			currentConnection = null;
 			console.log('음성 채널에 아무도 없어서 봇이 나갔습니다.');

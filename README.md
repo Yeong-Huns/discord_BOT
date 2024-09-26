@@ -1,6 +1,6 @@
 # 😺 따봉냥이야고마워 (Discord TTS 봇)
 
-### discord.js , gTTS 라이브러리를 사용한 디스코드 TTS 봇입니다.
+### discord.js , gTTS 라이브러리를 사용한 Node 기반 디스코드 TTS 봇입니다.
 
 > 명령어
 > * `-핑` : 서버의 응답을 확인합니다. 

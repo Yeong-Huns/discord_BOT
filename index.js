@@ -50,8 +50,8 @@ function deleteChannelMessage(voiceChannel){
 }
 
 async function processQueue() {
-	const voiceChannelId = currentConnection.joinConfig.channelId;
 	if (isPlaying || messageQueue.length === 0) return;
+	const voiceChannelId = currentConnection.joinConfig.channelId;
 
 	const {message, text} = messageQueue.shift();
 	isPlaying = true;

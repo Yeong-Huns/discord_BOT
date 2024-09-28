@@ -27,9 +27,7 @@ const client = new Client({
 
 const TOKEN = process.env.TOKEN;
 
-let currentConnection = null;
-let messageQueue = [];
-let isPlaying = false;
+const voiceConnections = {};
 
 function limitRepeatingCharacters(text, maxRepeats = 5) {
 	return text.replace(/(.)\1{4,}/g, (match, char) => char.repeat(maxRepeats));
@@ -49,12 +47,12 @@ function deleteChannelMessage(voiceChannel){
 	});
 }
 
-async function processQueue() {
-	if (isPlaying || messageQueue.length === 0) return;
-	const voiceChannelId = currentConnection.joinConfig.channelId;
+async function processQueue(voiceChannelId) {
+	if (!voiceConnections[voiceChannelId] || voiceConnections[voiceChannelId].isPlaying || voiceConnections[voiceChannelId].messageQueue.length === 0) return;
 
-	const {message, text} = messageQueue.shift();
-	isPlaying = true;
+	const { messageQueue, connection } = voiceConnections[voiceChannelId];
+	const { message, text } = messageQueue.shift();
+	voiceConnections[voiceChannelId].isPlaying = true;
 
 	const tts = new gTTS(text, 'ko');
 	const filePath = path.join(__dirname, `${voiceChannelId}_${uuidv4()}.mp3`);
@@ -62,37 +60,37 @@ async function processQueue() {
 	tts.save(filePath, async (err) => {
 		if (err) {
 			console.error('TTS 파일 생성 중 오류가 발생했습니다:', err);
-			isPlaying = false;
-			processQueue();
+			voiceConnections[voiceChannelId].isPlaying = false;
+			processQueue(voiceChannelId);
 			return;
 		}
 
-		if (currentConnection) {
+		if (connection) {
 			const player = createAudioPlayer();
 			const resource = createAudioResource(filePath);
 
 			player.play(resource);
-			currentConnection.subscribe(player);
+			connection.subscribe(player);
 
 			player.on(AudioPlayerStatus.Idle, () => {
 				if (fs.existsSync(filePath)) {
 					fs.unlinkSync(filePath);
 				}
-				const voiceChannelId = currentConnection.joinConfig.channelId;
 				const channel = client.channels.cache.get(voiceChannelId);
 
 				if (channel && channel.members.size === 1) {
 					console.log('음성 채널에 아무도 없어서 봇이 나갔습니다.');
-					currentConnection.destroy();
-					currentConnection = null;
+					connection.destroy();
+					delete voiceConnections[voiceChannelId];
+				} else {
+					voiceConnections[voiceChannelId].isPlaying = false;
+					processQueue(voiceChannelId);
 				}
-				isPlaying = false;
-				processQueue();
 			});
 		} else {
 			message.reply('음성 채널에 연결되어 있지 않습니다.');
-			isPlaying = false;
-			processQueue();
+			voiceConnections[voiceChannelId].isPlaying = false;
+			processQueue(voiceChannelId);
 		}
 	});
 }
@@ -103,8 +101,7 @@ client.once('ready', () => {
 
 client.on('messageCreate', async (message) => {
 	if (message.author.bot) return;
-
-
+	if (!message.content || message.attachments.size > 0) return; // 이미지, 파일 무시
 	if (message.content === '-만든놈') message.channel.send('김영훈');
 	if (message.content === '-핑') message.channel.send('퐁!');
 	if (message.content === '-인사') message.channel.send('안녕하세요! 헤실봇 인사 테스트입니다!');
@@ -113,15 +110,15 @@ client.on('messageCreate', async (message) => {
 	-도움: 명령어를 출력합니다.
 	-음성: 음성채널에서 TTS를 지원합니다. 
 	-나가: 음성채널에서 나갑니다.
-	-청소 [1~200] 1~200개 사이의 메세지를 삭제합니다.`);
-//'제가 인식하는 명령어는 다음과 같습니다: -핑, -인사, -도움, -음성, -나가, -청소'
+	-청소 [1~100] 1~100개 사이의 메세지를 삭제합니다.`);
+
 	if (message.content.startsWith('-청소')) {
 		const args = message.content.split(' ');
 		const deleteCount = parseInt(args[1], 10);
 
 		// 유효한 숫자가 입력되었는지 확인
-		if (!deleteCount || deleteCount < 1 || deleteCount > 200) {
-			return message.reply('1에서 200 사이의 숫자를 입력해주세요.');
+		if (!deleteCount || deleteCount < 1 || deleteCount > 100) {
+			return message.reply('1에서 100 사이의 숫자를 입력해주세요.');
 		}
 
 		// 메시지를 삭제
@@ -145,37 +142,45 @@ client.on('messageCreate', async (message) => {
 			return message.reply('음성 채널에 입장 후 명령어를 입력해주세요.');
 		}
 
-		try {
-			currentConnection = joinVoiceChannel({
-				channelId: voiceChannel.id,
-				guildId: voiceChannel.guild.id,
-				adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-			});
-			message.reply('채널 참가 완료, 이제부터 TTS 기능을 지원합니다.');
-		} catch (err) {
-			console.error(err);
-			return message.reply('채널에 합류하는 데 실패하였습니다...');
+		if (!voiceConnections[voiceChannel.id]) {
+			try {
+				const connection = joinVoiceChannel({
+					channelId: voiceChannel.id,
+					guildId: voiceChannel.guild.id,
+					adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+				});
+
+				voiceConnections[voiceChannel.id] = {
+					connection,
+					messageQueue: [],
+					isPlaying: false
+				};
+				message.reply('채널 참가 완료, 이제부터 TTS 기능을 지원합니다.');
+			} catch (err) {
+				console.error(err);
+				return message.reply('채널에 합류하는 데 실패하였습니다...');
+			}
 		}
 		return;
 	}
 
-	if (currentConnection && !message.author.bot) {
+	const voiceChannel = message.member.voice.channel;
+	if (voiceChannel && voiceConnections[voiceChannel.id] && !message.author.bot) {
 		const text = limitRepeatingCharacters(message.content);
-		messageQueue.push({message, text});
-		if (!isPlaying) processQueue();
+		voiceConnections[voiceChannel.id].messageQueue.push({ message, text });
+		if (!voiceConnections[voiceChannel.id].isPlaying) processQueue(voiceChannel.id);
 	}
 
 	if (message.content === '-종료' || message.content === '-나가' || message.content === '-그만') {
-		if (currentConnection) {
-			const voiceChannel = currentConnection.joinConfig.channelId;
+		const voiceChannel = message.member.voice.channel;
+		if (voiceChannel && voiceConnections[voiceChannel.id]) {
+			voiceConnections[voiceChannel.id].messageQueue = [];
+			voiceConnections[voiceChannel.id].isPlaying = false;
 
-			messageQueue = [];
-			isPlaying = false;
+			deleteChannelMessage(voiceChannel.id);
 
-			deleteChannelMessage(voiceChannel)
-
-			currentConnection.destroy();
-			currentConnection = null;
+			voiceConnections[voiceChannel.id].connection.destroy();
+			delete voiceConnections[voiceChannel.id];
 			message.reply('음성 지원을 종료하고, 채널을 떠납니다.');
 		} else {
 			message.reply('해당 봇은 음성 채널에 연결된 상태가 아닙니다.');
@@ -184,18 +189,18 @@ client.on('messageCreate', async (message) => {
 });
 
 client.on('voiceStateUpdate', (oldState, newState) => {
-	if (currentConnection) {
-		const voiceChannel = currentConnection.joinConfig.channelId;
-		const channel = client.channels.cache.get(voiceChannel);
+	const voiceChannelId = oldState.channelId || newState.channelId;
+	if (voiceConnections[voiceChannelId]) {
+		const channel = client.channels.cache.get(voiceChannelId);
 
-		if (channel && channel.members.size === 1) {  // 봇만 남아있으면 나가기
-			messageQueue = [];
-			isPlaying = false;
+		if (channel && channel.members.size === 1) { // 봇만 남아있으면 나가기
+			voiceConnections[voiceChannelId].messageQueue = [];
+			voiceConnections[voiceChannelId].isPlaying = false;
 
-			deleteChannelMessage(voiceChannel);
+			deleteChannelMessage(voiceChannelId);
 
-			currentConnection.destroy();
-			currentConnection = null;
+			voiceConnections[voiceChannelId].connection.destroy();
+			delete voiceConnections[voiceChannelId];
 			console.log('음성 채널에 아무도 없어서 봇이 나갔습니다.');
 		}
 	}

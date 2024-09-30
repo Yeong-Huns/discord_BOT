@@ -29,8 +29,38 @@ const TOKEN = process.env.TOKEN;
 
 const voiceConnections = {};
 
+/**
+ *
+ * @param {String} text
+ * @param maxRepeats
+ * @returns {String}
+ * @description 반복되는 문자열 ex) 'ㅋㅋㅋㅋㅋ' 같은 경우 최대 5번만 재생함
+ */
 function limitRepeatingCharacters(text, maxRepeats = 5) {
 	return text.replace(/(.)\1{4,}/g, (match, char) => char.repeat(maxRepeats));
+}
+
+/**
+ *
+ * @param {String} text
+ * @returns {String}
+ * @description 이모티콘 형식 <:{이름}:{숫자}>에서 {이름}만 남기고 제거
+ */
+function filterEmojis(text) {
+	return text.replace(/<:[a-zA-Z0-9_]+:\d+>/g, (match) => {
+		const emojiName = match.split(':')[1];
+		return emojiName ? `:${emojiName}:` : match;
+	});
+}
+
+/**
+ *
+ * @param {String} text
+ * @returns {String}
+ * @description URL 패턴을 정규식으로 찾고, "URL 링크"로 대체
+ */
+function filterUrls(text) {
+	return text.replace(/https?:\/\/[^\s]+/g, 'URL 링크');
 }
 
 function deleteChannelMessage(voiceChannel){
@@ -152,6 +182,7 @@ client.on('messageCreate', async (message) => {
 
 				voiceConnections[voiceChannel.id] = {
 					connection,
+					textChannelId: message.channel.id,
 					messageQueue: [],
 					isPlaying: false
 				};
@@ -166,9 +197,13 @@ client.on('messageCreate', async (message) => {
 
 	const voiceChannel = message.member.voice.channel;
 	if (voiceChannel && voiceConnections[voiceChannel.id] && !message.author.bot) {
-		const text = limitRepeatingCharacters(message.content);
-		voiceConnections[voiceChannel.id].messageQueue.push({ message, text });
-		if (!voiceConnections[voiceChannel.id].isPlaying) processQueue(voiceChannel.id);
+		if (message.channel.id === voiceConnections[voiceChannel.id].textChannelId) {
+			let text = limitRepeatingCharacters(message.content);
+			text = filterEmojis(text);
+			text = filterUrls(text);
+			voiceConnections[voiceChannel.id].messageQueue.push({ message, text });
+			if (!voiceConnections[voiceChannel.id].isPlaying) processQueue(voiceChannel.id);
+		}
 	}
 
 	if (message.content === '-종료' || message.content === '-나가' || message.content === '-그만') {

@@ -7,7 +7,9 @@
  * -----------------------------------------------------------
  * 2024-10-07        Yeong-Huns       최초 생성
  */
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Collection } = require('discord.js');
+
+const buttonAuthorCache = new Collection();
 
 module.exports = {
 	name: 'selectgif',
@@ -22,6 +24,7 @@ module.exports = {
 
 		const rows = [];
 		let currentRow = new ActionRowBuilder();
+
 		gifEmojis.forEach((emoji, index) => {
 			if (index % 4 === 0 && index !== 0) {
 				rows.push(currentRow);
@@ -39,14 +42,27 @@ module.exports = {
 			rows.push(currentRow);
 		}
 
-		await message.channel.send({
+		const sentMessage = await message.channel.send({
 			content: '원하는 GIF 이모지를 선택하세요:',
 			components: rows
 		});
+
+		buttonAuthorCache.set(sentMessage.id, message.author.id);
 	},
 	async handleButtonInteraction(interaction) {
-		// 버튼의 customId를 이용하여 처리
 		const emojiId = interaction.customId.split('_')[2];
+		const messageId = interaction.message.id;
+		const authorId = buttonAuthorCache.get(messageId);
+
+		if(interaction.user.id !== authorId){
+			const embed = new EmbedBuilder()
+				.setColor(interaction.member.displayHexColor)
+				.setTitle('다른 사용자가 이용중입니다.')
+				.setImage('https://upload3.inven.co.kr/upload/2020/07/22/bbs/i13163888308.jpg?MW=800')
+			await interaction.reply({embeds: [embed], ephemeral: true})
+			return;
+		}
+
 		const emoji = interaction.guild.emojis.cache.get(emojiId);
 
 		if (emoji) {

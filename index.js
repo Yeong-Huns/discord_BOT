@@ -13,6 +13,7 @@ const { limitRepeatingCharacters, filterEmojis, filterUrls } = require('./comman
 const { connectToVoiceChannel, processQueue, disconnectFromVoiceChannel, voiceConnections } = require('./commands/ttsHandler')
 const { cleanMessages } = require('./commands/cleaner');
 const selectGifCommand = require('./commands/selectgif');
+const { detectEmojis } = require('./commands/autoEmoji');
 
 const client = new Client({
 	intents: [
@@ -33,6 +34,7 @@ client.once('ready', () => {
 client.on('messageCreate', async (message) => {
 	if (message.author.bot) return;
 	if (!message.content || message.attachments.size > 0) return; // 이미지, 파일 무시
+	await detectEmojis(message);
 	if (message.content === '-만든놈') message.channel.send('김영훈');
 	if (message.content === '-핑') message.channel.send('퐁!');
 	if (message.content === '-인사') message.channel.send('안녕하세요! 헤실봇 인사 테스트입니다!');

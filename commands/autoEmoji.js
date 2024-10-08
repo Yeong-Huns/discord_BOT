@@ -30,5 +30,10 @@ module.exports = {
 				.setImage(emoji.url)
 			await message.channel.send({embeds: [embed]});
 		});
+		try {
+			await message.delete();
+		} catch (error) {
+			console.error('메시지를 삭제하는 중 오류가 발생했습니다:', error);
+		}
 	},
 };

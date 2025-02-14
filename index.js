@@ -13,6 +13,7 @@ const { limitRepeatingCharacters, filterEmojis, filterUrls } = require('./comman
 const { connectToVoiceChannel, processQueue, disconnectFromVoiceChannel, voiceConnections } = require('./commands/ttsHandler')
 const { cleanMessages } = require('./commands/cleaner');
 const selectGifCommand = require('./commands/selectgif');
+const selectEmojisCommand = require('./commands/selectEmoji')
 const { detectEmojis } = require('./commands/autoEmoji');
 
 const client = new Client({
@@ -63,6 +64,10 @@ client.on('messageCreate', async (message) => {
 		await selectGifCommand.execute(message);
 		return;
 	}
+	else if (message.content === '-콘') {
+		await selectEmojisCommand.execute(message);
+		return;
+	}
 
 	const commands = ['-음성', '-TTS', '-기계성대'];
 	if (commands.includes(message.content)) {
@@ -104,6 +109,15 @@ client.on('interactionCreate', async (interaction) => {
 
 	if (interaction.customId.startsWith('send_gif_')) {
 		await selectGifCommand.handleButtonInteraction(interaction);
+	}
+
+	if (
+		interaction.customId.startsWith('send_emoji_') ||
+		interaction.customId === 'emoji_prev_page' ||
+		interaction.customId === 'emoji_next_page' ||
+		interaction.customId === 'emoji_page_indicator'
+	) {
+		await selectEmojisCommand.handleButtonInteraction(interaction);
 	}
 });
 

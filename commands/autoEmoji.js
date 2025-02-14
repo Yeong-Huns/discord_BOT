@@ -6,6 +6,7 @@
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
  * 2024-10-08        Yeong-Huns       최초 생성
+ *
  */
 
 const {EmbedBuilder} = require('discord.js');

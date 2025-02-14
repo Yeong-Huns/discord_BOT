@@ -15,7 +15,9 @@ module.exports = {
 	name: 'selectgif',
 	description: '서버 내의 GIF 이모지들을 버튼으로 선택할 수 있는 인터페이스를 제공합니다.',
 	async execute(message) {
-		const gifEmojis = Array.from(message.guild.emojis.cache.filter(emoji => emoji.animated).values());
+		/* 최신 이모지 내역을 불러옴 */
+		const emojis = await message.guild.emojis.fetch();
+		const gifEmojis = Array.from(emojis.filter(emoji => emoji.animated).values());
 
 		if (!gifEmojis.length) {
 			message.channel.send('서버에 GIF 이모지가 없습니다.');

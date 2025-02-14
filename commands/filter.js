@@ -11,7 +11,6 @@
 
 
 /**
- *
  * @param {String} text
  * @param maxRepeats
  * @returns {String}

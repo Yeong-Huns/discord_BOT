@@ -8,13 +8,15 @@
  * 2024-09-26        Yeong-Huns       최초 생성
  */
 require('dotenv').config();
-const {Client, GatewayIntentBits, Partials, EmbedBuilder} = require('discord.js');
+const {Client, GatewayIntentBits, Partials, EmbedBuilder, Events, Collection } = require('discord.js');
 const {limitRepeatingCharacters, filterEmojis, filterUrls} = require('./commands/filter');
 const {connectToVoiceChannel, processQueue, disconnectFromVoiceChannel, voiceConnections} = require('./commands/ttsHandler')
 const {cleanMessages} = require('./commands/cleaner');
 const selectGifCommand = require('./commands/selectgif');
 const selectEmojisCommand = require('./commands/selectEmoji')
 const {detectEmojis} = require('./commands/autoEmoji');
+const fs = require('fs');
+const path = require('path');
 
 const client = new Client({
 	intents: [
@@ -27,6 +29,18 @@ const client = new Client({
 });
 
 const TOKEN = process.env.TOKEN;
+
+client.commands = new Collection();
+
+// 커맨드 폴더에서 모든 명령어 파일을 읽어서 등록
+const commandsPath = path.join(__dirname, 'slashCommand');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+for (const file of commandFiles) {
+	const filePath = path.join(commandsPath, file);
+	const command = require(filePath);
+	client.commands.set(command.data.name, command);
+}
 
 client.once('ready', () => {
 	console.log(`${client.user.tag} 봇 준비 완료!`);
@@ -98,6 +112,22 @@ client.on('messageCreate', async (message) => {
 		} else {
 			message.reply('해당 봇은 음성 채널에 연결된 상태가 아닙니다.');
 		}
+	}
+});
+
+/* 슬래시 커맨드 실행 이벤트 리스너 */
+client.on(Events.InteractionCreate, async interaction => {
+	if (!interaction.isChatInputCommand()) return;
+
+	const command = client.commands.get(interaction.commandName);
+
+	if (!command) return;
+
+	try {
+		await command.execute(interaction);
+	} catch (error) {
+		console.error(error);
+		await interaction.reply({ content: '명령어 실행 중 오류가 발생했습니다.', ephemeral: true });
 	}
 });
 

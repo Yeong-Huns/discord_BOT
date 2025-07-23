@@ -72,8 +72,8 @@ module.exports = {
 				.setColor(color)
 				.setDescription(feeling)
 				.addFields(
-					{ name: "온도", value: `${temp}°C`},
-					{ name: "pH", value: `${ph}`}
+					{ name: "온도", value: `${temp}°C`, inline: true},
+					{ name: "pH", value: `${ph}`, inline: true}
 				)
 				.setThumbnail(thumbnail)
 				.setFooter({

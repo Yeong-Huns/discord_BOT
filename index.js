@@ -18,6 +18,10 @@ const {detectEmojis} = require('./commands/autoEmoji');
 const fs = require('fs');
 const path = require('path');
 const {connectRedis} = require("./config/redis/redisClient");
+const mongoose = require('mongoose');
+
+mongoose.set('strictQuery', true);
+mongoose.connect(process.env.MONGO_URI);
 
 connectRedis();
 

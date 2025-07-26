@@ -38,7 +38,7 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_KEY }}
-          timeout: 60s
+          timeout: 300s
           script: |
             cd .docker/
             docker pull yeonghuns/kosa-denkins-bot:latest

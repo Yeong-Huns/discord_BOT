@@ -11,6 +11,7 @@
 require('dotenv').config();
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const axios = require("axios");
+const {getCachedValue, setCachedValue} = require("../redis/redisClient");
 
 function getTemperatureFeeling(temp) {
 	if (temp <= 15) return "매우 차갑습니다!";
@@ -34,6 +35,33 @@ const riverThumbnails = {
 	'안양천': process.env.ANYANGCHEON,
 };
 
+const makeEmbed = async (data, river, interaction) => {
+	const temperatureInfo = data[river];
+	if (!temperatureInfo) {
+		return await interaction.reply(`❌ ${river}에 대한 수온 정보를 찾을 수 없습니다.`);
+	}
+	const {TEMP : temp, PH : ph} = temperatureInfo;
+	const feeling = getTemperatureFeeling(Number(temp));
+	const color = getEmbedColor(Number(temp));
+	const thumbnail = riverThumbnails[river];
+
+	return new EmbedBuilder()
+		.setTitle(`${river}의 현재 수온`)
+		.setColor(color)
+		.setDescription(feeling)
+		.addFields(
+			{ name: "온도", value: `${temp}°C`, inline: true},
+			{ name: "pH", value: `${ph}`, inline: true}
+		)
+		.setThumbnail(thumbnail)
+		.setFooter({
+			text: interaction.user.username,
+			iconURL: interaction.user.displayAvatarURL({dynamic: true})
+		})
+
+
+}
+
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('수온')
@@ -50,38 +78,22 @@ module.exports = {
 				)
 		),
 	async execute(interaction) {
+		const redisKey = `hangang`;
 		const river = interaction.options.getString('하천');
-
 		try {
+			const cached = await getCachedValue(redisKey);
+			if(cached){
+				const data = JSON.parse(cached);
+				const embed = await makeEmbed(data, river, interaction);
+				await interaction.reply({embeds: [embed]});
+				return;
+			}
 			const response = await axios.get(process.env.HANGANG_API);
 			const {DATAs: {DATA: {HANGANG}}} = response.data;
 
-			const temperatureInfo = HANGANG[river];
-
-			if (!temperatureInfo) {
-				return interaction.reply(`❌ ${river}에 대한 수온 정보를 찾을 수 없습니다.`);
-			}
-
-			const {TEMP : temp, PH : ph} = temperatureInfo;
-			const feeling = getTemperatureFeeling(Number(temp));
-			const color = getEmbedColor(Number(temp));
-			const thumbnail = riverThumbnails[river];
-
-			const embed = new EmbedBuilder()
-				.setTitle(`${river}의 현재 수온`)
-				.setColor(color)
-				.setDescription(feeling)
-				.addFields(
-					{ name: "온도", value: `${temp}°C`, inline: true},
-					{ name: "pH", value: `${ph}`, inline: true}
-				)
-				.setThumbnail(thumbnail)
-				.setFooter({
-					text: interaction.user.username,
-					iconURL: interaction.user.displayAvatarURL({dynamic: true})
-				})
-
+			const embed = await makeEmbed(HANGANG, river, interaction);
 			await interaction.reply({embeds: [embed]});
+			await setCachedValue(redisKey, JSON.stringify(HANGANG), 1800);
 		} catch (error) {
 			console.error(error);
 			await interaction.reply("❌ 수온 데이터를 가져오는 중 오류가 발생했어요.");

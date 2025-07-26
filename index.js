@@ -17,6 +17,9 @@ const selectEmojisCommand = require('./commands/selectEmoji')
 const {detectEmojis} = require('./commands/autoEmoji');
 const fs = require('fs');
 const path = require('path');
+const {connectRedis} = require("./redis/redisClient");
+
+connectRedis();
 
 const client = new Client({
 	intents: [

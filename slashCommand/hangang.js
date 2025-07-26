@@ -11,7 +11,7 @@
 require('dotenv').config();
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const axios = require("axios");
-const {getCachedValue, setCachedValue} = require("../redis/redisClient");
+const {getCachedValue, setCachedValue} = require("../config/redis/redisClient");
 
 function getTemperatureFeeling(temp) {
 	if (temp <= 15) return "매우 차갑습니다!";

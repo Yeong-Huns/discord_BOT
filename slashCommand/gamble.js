@@ -55,7 +55,7 @@ module.exports = {
 		}
 
 		// 결과 로직
-		const winRate = Math.floor(Math.random() * 51) + 30;
+		const winRate = Math.floor(Math.random() * 41) + 30;
 		const resultChance = Math.floor(Math.random() * 100) + 1;
 		const isWin = resultChance <= winRate;
 

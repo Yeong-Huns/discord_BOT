@@ -135,6 +135,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	} catch (error) {
 		console.error(error);
 		await interaction.reply({ content: '명령어 실행 중 오류가 발생했습니다.', ephemeral: true });
+		return;
 	}
 });
 

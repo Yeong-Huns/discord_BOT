@@ -27,12 +27,19 @@ const rest = new REST({ version: '10' }).setToken(token);
 
 (async () => {
 	try {
-		console.log('슬래시 커맨드 등록 시작...');
+		console.log('길드 슬래시 커맨드 등록 시작...');
 		await rest.put(
 			Routes.applicationGuildCommands(clientId, guildId),
 			{ body: commands },
 		);
-		console.log('슬래시 커맨드 등록 완료!');
+		console.log('길드 슬래시 커맨드 등록 완료!');
+
+		console.log('글로벌 슬래시 커맨드 등록 시작...');
+		const globalResult = await rest.put(
+			Routes.applicationCommands(clientId),
+			{ body: commands },
+		);
+		console.log(`글로벌 슬래시 커맨드 등록 완료: ${globalResult.length}개 등록`);
 	} catch (error) {
 		console.error(error);
 	}

@@ -14,8 +14,8 @@ const userSchema = new mongoose.Schema({
 	serverId: String,
 	account: { type: Number, default: 0 },
 	lastDeposit: Date,
-});
+}, { optimisticConcurrency: true });
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = { userSchema, User};
+module.exports = { User };

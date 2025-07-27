@@ -12,6 +12,8 @@ const {SlashCommandBuilder, EmbedBuilder} = require("discord.js");
 const {User} = require('../schema/user.schema');
 const {saveCommandLog} = require("../utils/logging");
 
+const guildIcons = new Map();
+
 /* Command */
 const slashCommand =
 	new SlashCommandBuilder()
@@ -60,11 +62,26 @@ const execute = async (interaction) => {
 		thumbnailUrl = null;
 	}
 
-	const leaderBoard = topUsers.map((user, index) => `**${index + 1}.<@${user.userId}>\n${user.account.toLocaleString('ko-KR')}₩**`).join('\n\n');
+	for (const user of topUsers) {
+		if (!guildIcons.has(user.serverId)) {
+			const guild = interaction.client.guilds.cache.get(user.serverId);
+			const iconUrl = guild ? guild.iconURL({ dynamic: true }) : null;
+			const guildName = guild ? guild.name : null;
+			guildIcons.set(user.serverId, { guildName, iconUrl });
+		}
+	}
+
+	const fields = topUsers.map((user, index) => {
+		const { guildName, iconUrl } = guildIcons.get(user.serverId);
+		const defaultIconUrl = 'https://cdn.discordapp.com/embed/avatars/0.png';
+		const iconText = `[${guildName}](${iconUrl || defaultIconUrl })`;
+
+		return `**${index + 1}.<@${user.userId}> - [ ${iconText} ]\n${user.account.toLocaleString('ko-KR')}₩**`
+	}).join('\n\n');
 
 	const embed = new EmbedBuilder()
 		.setTitle(titleName)
-		.setDescription(leaderBoard)
+		.setDescription(fields)
 		.setColor(0x57f287)
 		.setTimestamp()
 		.setFooter({text: footerText, iconURL: interaction.user.displayAvatarURL({dynamic: true})});

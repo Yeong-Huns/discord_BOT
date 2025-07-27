@@ -29,6 +29,12 @@ async function connectRedis() {
 
 const getCachedValue = async (key) => await redis.get(key);
 
-const setCachedValue = async (key, value, ttl) => await redis.set(key, value, { EX: ttl});
+const setCachedValue = async (key, value, ttl = null) => {
+	if(ttl){
+		await redis.set(key, value, { EX: ttl});
+	} else {
+		await redis.set(key, value);
+	}
+}
 
 module.exports = { redis, connectRedis, getCachedValue, setCachedValue };

@@ -15,7 +15,6 @@ import {filterEmojis, filterUrls, limitRepeatingCharacters} from "./legacy/filte
 import {connectToVoiceChannel, disconnectFromVoiceChannel, processQueue, voiceConnections} from "./legacy/ttsHandler.js"
 import {cleanMessages} from "./legacy/cleaner.js";
 import selectGifCommand from "./legacy/selectgif.js";
-import selectEmojisCommand from "./legacy/selectEmoji.js"
 import {detectEmojis} from "./legacy/autoEmoji.js";
 import fs from "fs";
 import path from "path";
@@ -137,23 +136,6 @@ client.on(Events.InteractionCreate, async interaction => {
 		console.error(error);
 		await interaction.reply({content: '명령어 실행 중 오류가 발생했습니다.', ephemeral: true});
 		return;
-	}
-});
-
-client.on('interactionCreate', async (interaction) => {
-	if (!interaction.isButton()) return;
-
-	if (interaction.customId.startsWith('send_gif_')) {
-		await selectGifCommand.handleButtonInteraction(interaction);
-	}
-
-	if (
-		interaction.customId.startsWith('send_emoji_') ||
-		interaction.customId === 'emoji_prev_page' ||
-		interaction.customId === 'emoji_next_page' ||
-		interaction.customId === 'emoji_page_indicator'
-	) {
-		await selectEmojisCommand.handleButtonInteraction(interaction);
 	}
 });
 

@@ -7,10 +7,12 @@
  * -----------------------------------------------------------
  * 25. 7. 27.        Yeong-Huns       최초 생성
  */
-require('dotenv').config();
-const {SlashCommandBuilder, EmbedBuilder} = require("discord.js");
-const {User} = require('../schema/user.schema');
-const {saveCommandLog} = require("../utils/logging");
+import dotenv from 'dotenv';
+import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { User } from '../schema/user.schema.js';
+import { saveCommandLog } from "../utils/logging.js";
+
+dotenv.config();
 
 const guildIcons = new Map();
 
@@ -102,7 +104,7 @@ async function fetchTopUsers(options = {}) {
 		.exec();
 }
 
-module.exports = {
+export default {
 	data: slashCommand,
 	execute,
 };

@@ -7,11 +7,13 @@
  * -----------------------------------------------------------
  * 25. 7. 26.        Yeong-Huns       최초 생성
  */
-require('dotenv').config();
-const {SlashCommandBuilder, EmbedBuilder} = require("discord.js");
-const {User} = require('../schema/user.schema');
-const convertDate = require("../utils/convertDate");
-const {saveCommandLog} = require("../utils/logging");
+import dotenv from 'dotenv';
+import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { User } from '../schema/user.schema.js';
+import convertDate from "../utils/convertDate.js";
+import { saveCommandLog } from "../utils/logging.js";
+
+dotenv.config();
 
 /* Command */
 const slashCommand =
@@ -88,7 +90,7 @@ const execute = async (interaction) => {
 	});
 }
 
-module.exports = {
+export default {
 	data: slashCommand,
 	execute,
 }

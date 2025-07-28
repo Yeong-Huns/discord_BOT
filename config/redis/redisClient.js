@@ -7,12 +7,14 @@
  * -----------------------------------------------------------
  * 25. 7. 26.        Yeong-Huns       최초 생성
  */
-require('dotenv').config();
-const { createClient } = require('redis');
+import dotenv from "dotenv";
+import { createClient} from "redis";
+
+dotenv.config();
 
 const { REDIS_USERNAME, REDIS_PASSWORD, REDIS_HOST, REDIS_PORT } = process.env
 
-const redis = createClient({
+export const redis = createClient({
 	username: REDIS_USERNAME,
 	password: REDIS_PASSWORD,
 	socket: {
@@ -21,20 +23,18 @@ const redis = createClient({
 	}
 });
 
-async function connectRedis() {
+export async function connectRedis() {
 	if (!redis.isOpen) {
 		await redis.connect();
 	}
 }
 
-const getCachedValue = async (key) => await redis.get(key);
+export const getCachedValue = async (key) => await redis.get(key);
 
-const setCachedValue = async (key, value, ttl = null) => {
+export const setCachedValue = async (key, value, ttl = null) => {
 	if(ttl){
 		await redis.set(key, value, { EX: ttl});
 	} else {
 		await redis.set(key, value);
 	}
 }
-
-module.exports = { redis, connectRedis, getCachedValue, setCachedValue };

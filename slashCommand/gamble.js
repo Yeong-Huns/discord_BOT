@@ -7,9 +7,9 @@
  * -----------------------------------------------------------
  * 25. 7. 22.        Yeong-Huns       최초 생성
  */
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const { User } = require('../schema/user.schema');
-const {saveCommandLog} = require("../utils/logging");
+import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { User } from '../schema/user.schema.js';
+import { saveCommandLog } from "../utils/logging.js";
 
 /* Command */
 const slashCommand =
@@ -102,7 +102,7 @@ const execute = async (interaction) => {
 	});
 }
 
-module.exports = {
+export default {
 	data: slashCommand,
 	execute,
 };

@@ -7,7 +7,7 @@
  * -----------------------------------------------------------
  * 25. 7. 27.        Yeong-Huns       최초 생성
  */
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const commandLogSchema = new mongoose.Schema({
 	userId: { type: String, required: true },
@@ -22,6 +22,4 @@ const commandLogSchema = new mongoose.Schema({
 	createdAt: { type: Date, default: Date.now, index: { expires: '7d' } }
 });
 
-const CommandLog = mongoose.model('CommandLog', commandLogSchema);
-
-module.exports = { CommandLog } ;
+export const CommandLog = mongoose.model('CommandLog', commandLogSchema);

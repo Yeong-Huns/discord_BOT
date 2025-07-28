@@ -1,19 +1,7 @@
-const { CommandLog } = require('../schema/log.schema');
-const convertDate = require("./convertDate");
+import { CommandLog } from "../schema/log.schema.js";
+import convertDate from "./convertDate.js";
 
-/*
-const type = {
-	userId,
-	username,
-	serverId,
-	servername,
-	commandName,
-	optionAmount = null,
-	userBalance = null,
-}
-*/
-
-async function saveCommandLog(interaction, options = {}) {
+export async function saveCommandLog(interaction, options = {}) {
 	const date = convertDate(new Date());
 	const data = {
 		userId: interaction.user.id,
@@ -29,7 +17,3 @@ async function saveCommandLog(interaction, options = {}) {
 	});
 	await log.save();
 }
-
-module.exports = {
-	saveCommandLog,
-};

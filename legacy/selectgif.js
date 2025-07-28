@@ -7,11 +7,11 @@
  * -----------------------------------------------------------
  * 2024-10-07        Yeong-Huns       최초 생성
  */
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Collection } = require('discord.js');
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Collection } from 'discord.js';
 
 const buttonAuthorCache = new Collection();
 
-module.exports = {
+const selectGifCommand = {
 	name: 'selectgif',
 	description: '서버 내의 GIF 이모지들을 버튼으로 선택할 수 있는 인터페이스를 제공합니다.',
 	async execute(message) {
@@ -88,4 +88,6 @@ module.exports = {
 			await interaction.reply({ content: '해당 이모지를 찾을 수 없습니다.', ephemeral: true });
 		}
 	},
-};
+}
+
+export default selectGifCommand;

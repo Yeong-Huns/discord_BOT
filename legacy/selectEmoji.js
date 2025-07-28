@@ -7,12 +7,12 @@
  * -----------------------------------------------------------
  * 2025-02-15        Yeong-Huns       최초 생성
  */
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Collection } = require('discord.js');
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Collection } from 'discord.js';
 
 const buttonAuthorCache = new Collection();
-const paginationCache = new Collection(); // 메시지별 페이징 상태 저장
+const paginationCache = new Collection();
 
-// 한 페이지에 최대 20개의 이모지, 각 행당 최대 5개의 버튼 (총 4행 + 네비게이션 1행 = 5행)
+/* 한 페이지에 최대 20개의 이모지, 각 행당 최대 5개의 버튼 */
 const PAGE_SIZE = 20;
 const BUTTONS_PER_ROW = 5;
 
@@ -68,11 +68,11 @@ function generateEmojiRows(emojis, currentPage, totalPages) {
 	return rows;
 }
 
-module.exports = {
+const selectEmojisCommand = {
 	name: 'selectEmoji',
 	description: '서버 내의 이모지들을 버튼으로 선택할 수 있는 인터페이스를 제공합니다. (페이징 포함)',
 	async execute(message) {
-		// 서버의 모든 정적 이모지 목록을 가져옴
+		/*서버의 모든 정적 이모지 목록을 가져옴*/
 		const emojiList = await message.guild.emojis.fetch();
 		const emojis = Array.from(emojiList.filter(emoji => !emoji.animated).values());
 
@@ -110,7 +110,7 @@ module.exports = {
 			return;
 		}
 
-		// 페이지 네비게이션 버튼 처리
+		/*페이지 네비게이션 버튼 처리*/
 		if (customId === 'emoji_prev_page' || customId === 'emoji_next_page') {
 			const paginationData = paginationCache.get(messageId);
 			if (!paginationData) {
@@ -123,14 +123,14 @@ module.exports = {
 			} else if (customId === 'emoji_next_page' && currentPage < totalPages) {
 				currentPage++;
 			}
-			// 캐시 업데이트 및 메시지 컴포넌트 재생성
+			/*캐시 업데이트 및 메시지 컴포넌트 재생성*/
 			paginationCache.set(messageId, { emojis, currentPage, totalPages });
 			const newRows = generateEmojiRows(emojis, currentPage, totalPages);
 			await interaction.update({ components: newRows });
 			return;
 		}
 
-		// 이모지 선택 버튼 처리
+		/*이모지 선택 버튼 처리*/
 		if (customId.startsWith('send_emoji_')) {
 			const emojiId = customId.split('_')[2];
 			const emoji = interaction.guild.emojis.cache.get(emojiId);
@@ -157,4 +157,6 @@ module.exports = {
 			}
 		}
 	},
-};
+}
+
+export default selectEmojisCommand;

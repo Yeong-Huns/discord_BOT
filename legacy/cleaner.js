@@ -12,7 +12,7 @@
  * 메세지 삭제
  * @param {Object} message 메시지 객체
  */
-async function cleanMessages(message) {
+export async function cleanMessages(message) {
 	const args = message.content.split(' ');
 	const deleteCount = parseInt(args[1], 10);
 
@@ -32,7 +32,3 @@ async function cleanMessages(message) {
 		message.reply('메시지를 삭제하는 중 오류가 발생했습니다.');
 	}
 }
-
-module.exports = {
-	cleanMessages
-};

@@ -7,7 +7,7 @@
  * -----------------------------------------------------------
  * 25. 7. 26.        Yeong-Huns       최초 생성
  */
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
 	userId: String,
@@ -16,6 +16,4 @@ const userSchema = new mongoose.Schema({
 	lastDeposit: Date,
 }, { optimisticConcurrency: true });
 
-const User = mongoose.model('User', userSchema);
-
-module.exports = { User };
+export const User = mongoose.model('User', userSchema);

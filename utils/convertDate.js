@@ -14,4 +14,4 @@ const convertDate = (date) => {
 	return kstDate.toISOString().slice(0, 10);
 }
 
-module.exports = convertDate;
+export default convertDate;

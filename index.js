@@ -7,23 +7,27 @@
  * -----------------------------------------------------------
  * 2024-09-26        Yeong-Huns       최초 생성
  */
-require('dotenv').config();
-const {Client, GatewayIntentBits, Partials, EmbedBuilder, Events, Collection } = require('discord.js');
-const {limitRepeatingCharacters, filterEmojis, filterUrls} = require('./commands/filter');
-const {connectToVoiceChannel, processQueue, disconnectFromVoiceChannel, voiceConnections} = require('./commands/ttsHandler')
-const {cleanMessages} = require('./commands/cleaner');
-const selectGifCommand = require('./commands/selectgif');
-const selectEmojisCommand = require('./commands/selectEmoji')
-const {detectEmojis} = require('./commands/autoEmoji');
-const fs = require('fs');
-const path = require('path');
-const {connectRedis} = require("./config/redis/redisClient");
-const mongoose = require('mongoose');
+import dotenv from "dotenv";
+import {Client, GatewayIntentBits, Partials, EmbedBuilder, Events, Collection } from "discord.js";
+import {limitRepeatingCharacters, filterEmojis, filterUrls} from "./legacy/filter.js";
+import {connectToVoiceChannel, processQueue, disconnectFromVoiceChannel, voiceConnections} from "./legacy/ttsHandler.js"
+import {cleanMessages} from "./legacy/cleaner.js";
+import selectGifCommand from "./legacy/selectgif.js";
+import selectEmojisCommand from "./legacy/selectEmoji.js"
+import {detectEmojis} from "./legacy/autoEmoji.js";
+import fs from "fs";
+import path from "path";
+import {connectRedis} from "./config/redis/redisClient.js";
+import mongoose from "mongoose";
+
+dotenv.config();
 
 mongoose.set('strictQuery', true);
-mongoose.connect(process.env.MONGO_URI);
 
-connectRedis();
+await Promise.all([
+	mongoose.connect(process.env.MONGO_URI),
+	connectRedis()
+]);
 
 const client = new Client({
 	intents: [
@@ -39,14 +43,14 @@ const TOKEN = process.env.TOKEN;
 
 client.commands = new Collection();
 
-// 커맨드 폴더에서 모든 명령어 파일을 읽어서 등록
-const commandsPath = path.join(__dirname, 'slashCommand');
+/* 커맨드 폴더에서 모든 명령어 파일을 읽어서 등록 */
+const commandsPath = path.join(process.cwd(), 'slashCommand');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
-	const filePath = path.join(commandsPath, file);
-	const command = require(filePath);
-	client.commands.set(command.data.name, command);
+	const filePath = `./${path.relative(process.cwd(), path.join(commandsPath, file))}`;
+	const command = await import(filePath);
+	client.commands.set(command.default.data.name, command.default);
 }
 
 client.once('ready', () => {
@@ -175,7 +179,7 @@ client.on('guildMemberAdd', (member) => {
 	channel.send(`${member} 님이 방금 서버에 합류하셨어요!`);
 });
 
-client.login(TOKEN);
+await client.login(TOKEN);
 
 client.on('error', (error) => {
 	console.error('Discord Client에서 오류 발생:', error);

@@ -7,11 +7,13 @@
  * -----------------------------------------------------------
  * 25. 7. 23.        Yeong-Huns       최초 생성
  */
-require('dotenv').config();
-const {SlashCommandBuilder, EmbedBuilder} = require("discord.js");
-const axios = require("axios");
-const {getCachedValue, setCachedValue} = require("../config/redis/redisClient");
-const {saveCommandLog} = require("../utils/logging");
+import dotenv from 'dotenv';
+import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import axios from "axios";
+import { getCachedValue, setCachedValue } from "../config/redis/redisClient.js";
+import { saveCommandLog } from "../utils/logging.js";
+
+dotenv.config();
 
 const riverThumbnails = {
 	'중랑천': process.env.JUNGNANGCHEON,
@@ -103,7 +105,7 @@ function getEmbedColor(temp) {
 	return 0xe74c3c; /*빨강*/
 }
 
-module.exports = {
+export default {
 	data: slashCommand,
 	execute,
 };

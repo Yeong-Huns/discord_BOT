@@ -104,8 +104,8 @@ export class RankingService {
 	_formatRankingDescription(users) {
 		return users.map((user, index) => {
 			const guild = this.client.guilds.cache.get(user.serverId);
-			const guildName = guild ? guild.name : '알 수 없는 서버';
-			const iconUrl = guild ? guild.iconURL({ dynamic: true }) : 'https://cdn.discordapp.com/embed/avatars/0.png';
+			const guildName = guild ? guild.name : null;
+			const iconUrl = guild.icon ? guild.iconURL({ dynamic: true }) : 'https://cdn.discordapp.com/embed/avatars/0.png';
 
 			const serverInfo = `[${guildName}](${iconUrl})`;
 			const userAccount = user.account.toLocaleString('ko-KR');

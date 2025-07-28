@@ -1,5 +1,5 @@
 import { CommandLog } from "../schema/log.schema.js";
-import convertDate from "./convertDate.js";
+import convertDate from "./convert-date.js";
 
 export async function saveCommandLog(interaction, options = {}) {
 	const date = convertDate(new Date());

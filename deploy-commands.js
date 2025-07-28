@@ -8,20 +8,31 @@
  * 25. 7. 22.        Yeong-Huns       최초 생성
  */
 import dotenv from 'dotenv';
-import { REST, Routes } from 'discord.js';
-import path from 'path';
+import {REST, Routes} from 'discord.js';
 import fs from 'fs';
+import path from "path";
+import {fileURLToPath} from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
 const { TOKEN : token , CLIENT_ID : clientId , GUILD_ID : guildId } = process.env;
 
 const commands = [];
-const commandFiles = fs.readdirSync('./slashCommand').filter(file => file.endsWith('.js'));
+const commandsPath = path.join(__dirname, 'commands', 'interface');
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
 
 for (const file of commandFiles) {
-	const command = await import(`./slashCommand/${file}`);
-	commands.push(command.default.data.toJSON());
+	const filePath = path.join(commandsPath, file);
+	console.log(filePath);
+	const command = await import(`file://${filePath}`);
+	if (command.default.data) {
+		console.log(command.default.data.toJSON());
+		commands.push(command.default.data.toJSON());
+	}
 }
 
 const rest = new REST({ version: '10' }).setToken(token);

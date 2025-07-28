@@ -8,24 +8,22 @@
  * 2024-09-26        Yeong-Huns       최초 생성
  */
 import dotenv from "dotenv";
-import {Client, GatewayIntentBits, Partials, EmbedBuilder, Events, Collection } from "discord.js";
-import {limitRepeatingCharacters, filterEmojis, filterUrls} from "./legacy/filter.js";
-import {connectToVoiceChannel, processQueue, disconnectFromVoiceChannel, voiceConnections} from "./legacy/ttsHandler.js"
+dotenv.config();
+
+import {Client, Collection, EmbedBuilder, Events, GatewayIntentBits, Partials} from "discord.js";
+import {filterEmojis, filterUrls, limitRepeatingCharacters} from "./legacy/filter.js";
+import {connectToVoiceChannel, disconnectFromVoiceChannel, processQueue, voiceConnections} from "./legacy/ttsHandler.js"
 import {cleanMessages} from "./legacy/cleaner.js";
 import selectGifCommand from "./legacy/selectgif.js";
 import selectEmojisCommand from "./legacy/selectEmoji.js"
 import {detectEmojis} from "./legacy/autoEmoji.js";
 import fs from "fs";
 import path from "path";
-import {connectRedis} from "./config/redis/redisClient.js";
-import mongoose from "mongoose";
-
-dotenv.config();
-
-mongoose.set('strictQuery', true);
+import {connectRedis} from "./config/redis/redis-client.js";
+import {connectMongo} from "./config/mongo/mongo-client.js";
 
 await Promise.all([
-	mongoose.connect(process.env.MONGO_URI),
+	connectMongo(),
 	connectRedis()
 ]);
 
@@ -39,12 +37,12 @@ const client = new Client({
 	partials: [Partials.Channel]
 });
 
-const TOKEN = process.env.TOKEN;
+const {TOKEN} = process.env;
 
 client.commands = new Collection();
 
 /* 커맨드 폴더에서 모든 명령어 파일을 읽어서 등록 */
-const commandsPath = path.join(process.cwd(), 'slashCommand');
+const commandsPath = path.join(process.cwd(), 'commands', 'interface');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
@@ -131,14 +129,13 @@ client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 
 	const command = client.commands.get(interaction.commandName);
-
 	if (!command) return;
 
 	try {
 		await command.execute(interaction);
 	} catch (error) {
 		console.error(error);
-		await interaction.reply({ content: '명령어 실행 중 오류가 발생했습니다.', ephemeral: true });
+		await interaction.reply({content: '명령어 실행 중 오류가 발생했습니다.', ephemeral: true});
 		return;
 	}
 });

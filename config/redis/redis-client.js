@@ -7,9 +7,8 @@
  * -----------------------------------------------------------
  * 25. 7. 26.        Yeong-Huns       최초 생성
  */
-import dotenv from "dotenv";
-import { createClient} from "redis";
-
+import dotenv from 'dotenv';
+import {createClient} from "redis";
 dotenv.config();
 
 const { REDIS_USERNAME, REDIS_PASSWORD, REDIS_HOST, REDIS_PORT } = process.env

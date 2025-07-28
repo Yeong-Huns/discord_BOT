@@ -8,7 +8,7 @@
  * 25. 7. 27.        Yeong-Huns       최초 생성
  */
 import dotenv from 'dotenv';
-import { REST, Routes } from 'discord.js';
+import {REST, Routes} from 'discord.js';
 
 dotenv.config();
 

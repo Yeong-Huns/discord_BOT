@@ -13,7 +13,6 @@ dotenv.config();
 import {Client, Collection, EmbedBuilder, Events, GatewayIntentBits, Partials} from "discord.js";
 import {filterEmojis, filterUrls, limitRepeatingCharacters} from "./legacy/filter.js";
 import {connectToVoiceChannel, disconnectFromVoiceChannel, processQueue, voiceConnections} from "./legacy/ttsHandler.js"
-import {cleanMessages} from "./legacy/cleaner.js";
 import selectGifCommand from "./legacy/selectgif.js";
 import {detectEmojis} from "./legacy/autoEmoji.js";
 import fs from "fs";
@@ -71,20 +70,12 @@ client.on('messageCreate', async (message) => {
 				{name: '`-도움`', value: '명령어를 출력합니다.'},
 				{name: '`-음성`', value: '음성채널에서 TTS를 지원합니다.'},
 				{name: '`-나가`', value: '음성채널에서 나갑니다.'},
-				{name: '`-청소` __*1~100 사이 숫자*__', value: '1~100개 사이의 메세지를 삭제합니다.'},
-				{name: '`-gif`', value: '서버에 등록된 gif 이모지를 출력합니다.'},
-				{name: '`-콘`', value: '서버에 등록된 정적 이모지를 출력합니다.'}
+				{name: '`-gif`', value: '서버에 등록된 gif 이모지를 출력합니다.'}
 			);
 
 		message.channel.send({embeds: [embed]});
-	} else if (message.content.startsWith('-청소')) {
-		await cleanMessages(message);
-		return;
 	} else if (message.content === '-gif') {
 		await selectGifCommand.execute(message);
-		return;
-	} else if (message.content === '-콘') {
-		await selectEmojisCommand.execute(message);
 		return;
 	}
 

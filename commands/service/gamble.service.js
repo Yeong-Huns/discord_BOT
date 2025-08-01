@@ -130,7 +130,7 @@ export class GambleService {
 	 * @private
 	 */
 	_calculateGamblingResult() {
-		const n = Math.random() ** 1.6;
+		const n = Math.random() ** 1.5;
 		const winRate = Math.floor(n * 41) + 30;
 		const resultChance = Math.floor(Math.random() * 100) + 1;
 		const isWin = resultChance <= winRate;

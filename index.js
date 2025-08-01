@@ -60,21 +60,7 @@ client.on('messageCreate', async (message) => {
 	if (message.content === '-만든놈') message.channel.send('김영훈');
 	if (message.content === '-핑') message.channel.send('퐁!');
 	if (message.content === '-인사') message.channel.send('안녕하세요! 헤실봇 인사 테스트입니다!');
-	if (message.content === '-도움') {
-		const embed = new EmbedBuilder()
-			.setColor(0x0099FF) // 임베드 색상 지정
-			.setTitle('명령어 안내')
-			.setDescription(' ')
-			.addFields(
-				{name: '`-핑`', value: '서버가 살아있는지 테스트합니다.'},
-				{name: '`-도움`', value: '명령어를 출력합니다.'},
-				{name: '`-음성`', value: '음성채널에서 TTS를 지원합니다.'},
-				{name: '`-나가`', value: '음성채널에서 나갑니다.'},
-				{name: '`-gif`', value: '서버에 등록된 gif 이모지를 출력합니다.'}
-			);
-
-		message.channel.send({embeds: [embed]});
-	} else if (message.content === '-gif') {
+	else if (message.content === '-gif') {
 		await selectGifCommand.execute(message);
 		return;
 	}

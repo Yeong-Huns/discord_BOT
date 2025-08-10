@@ -19,7 +19,8 @@ export const redis = createClient({
 	socket: {
 		host: REDIS_HOST,
 		port: Number(REDIS_PORT),
-	}
+	},
+	pingInterval: 10000,
 });
 
 export async function connectRedis() {
@@ -37,3 +38,9 @@ export const setCachedValue = async (key, value, ttl = null) => {
 		await redis.set(key, value);
 	}
 }
+
+redis.on('error', (err) => console.error('레디스 클라이언트 에러', err));
+
+redis.on('reconnecting', () => console.log('레디스 클라이언트 재연결됨'));
+
+redis.on('ready', () => console.log('레디스 연결 성공'));

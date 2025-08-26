@@ -20,6 +20,10 @@ import path from "path";
 import {connectRedis} from "./config/redis/redis-client.js";
 import {connectMongo} from "./config/mongo/mongo-client.js";
 
+import { generateDependencyReport } from '@discordjs/voice';
+
+console.log(generateDependencyReport());
+
 await Promise.all([
 	connectMongo(),
 	connectRedis()

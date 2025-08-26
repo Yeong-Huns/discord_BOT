@@ -32,3 +32,4 @@ export default {
 	data: slashCommand,
 	execute,
 };
+

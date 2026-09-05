@@ -1,13 +1,14 @@
 /**
- * fileName       : ttsHandler
+ * fileName       : tts.service
  * author         : Yeong-Huns
- * date           : 2024-10-07
+ * date           : 26. 8. 22.
  * ===========================================================
  * DATE              AUTHOR             NOTE
  * -----------------------------------------------------------
- * 2024-10-07        Yeong-Huns       최초 생성
+ * 26. 8. 22.        Yeong-Huns       legacy/ttsHandler.js 슬래시 커맨드 전환에 따른 이전
  */
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } from '@discordjs/voice';
+import { EmbedBuilder, MessageFlags } from 'discord.js';
 import gTTS from 'gtts';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -45,35 +46,6 @@ export function deleteChannelMessage(voiceChannelId) {
 			}
 		});
 	});
-}
-
-/**
- * 봇이 음성 채널에 연결
- * @param {Object} voiceChannel 음성 채널 정보
- * @param {Object} message 메시지 객체
- * @returns {Object} 연결 객체
- */
-export function connectToVoiceChannel(voiceChannel, message) {
-	try {
-		const connection = joinVoiceChannel({
-			channelId: voiceChannel.id,
-			guildId: voiceChannel.guild.id,
-			adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-		});
-
-		voiceConnections[voiceChannel.id] = {
-			connection,
-			textChannelId: message.channel.id,
-			messageQueue: [],
-			isPlaying: false,
-		};
-		message.reply('채널 참가 완료, 이제부터 TTS 기능을 지원합니다.');
-		return connection;
-	} catch (err) {
-		console.error('음성 채널 연결 실패:', err);
-		message.reply('채널에 합류하는 데 실패하였습니다...');
-		return null;
-	}
 }
 
 /**
@@ -154,5 +126,68 @@ export function disconnectFromVoiceChannel(voiceChannelId) {
 		if (connection.state.status !== 'destroyed')voiceConnections[voiceChannelId].connection.destroy();
 		delete voiceConnections[voiceChannelId];
 
+	}
+}
+
+export class TtsService {
+	/**
+	 * @param {import('discord.js').CommandInteraction} interaction
+	 */
+	constructor(interaction) {
+		this.interaction = interaction;
+		this.voiceChannel = interaction.member?.voice?.channel;
+	}
+
+	/**
+	 * @desc 음성 채널 참가 및 TTS 지원 시작
+	 */
+	async join() {
+		if (!this.voiceChannel) {
+			return { content: '음성 채널에 입장 후 명령어를 입력해주세요.', flags: MessageFlags.Ephemeral };
+		}
+
+		if (voiceConnections[this.voiceChannel.id]) {
+			return { content: '이미 해당 음성 채널에서 TTS 기능을 지원하고 있습니다.', flags: MessageFlags.Ephemeral };
+		}
+
+		try {
+			const connection = joinVoiceChannel({
+				channelId: this.voiceChannel.id,
+				guildId: this.voiceChannel.guild.id,
+				adapterCreator: this.voiceChannel.guild.voiceAdapterCreator,
+			});
+
+			voiceConnections[this.voiceChannel.id] = {
+				connection,
+				textChannelId: this.interaction.channelId,
+				messageQueue: [],
+				isPlaying: false,
+			};
+			return { embeds: [this._createEmbed(0x57f287, '✅ 채널 참가 완료, 이제부터 TTS 기능을 지원합니다.')] };
+		} catch (err) {
+			console.error('음성 채널 연결 실패:', err);
+			return { content: '채널에 합류하는 데 실패하였습니다...', flags: MessageFlags.Ephemeral };
+		}
+	}
+
+	/**
+	 * @desc 음성 채널에서 나가기
+	 */
+	async leave() {
+		if (this.voiceChannel && voiceConnections[this.voiceChannel.id]) {
+			disconnectFromVoiceChannel(this.voiceChannel.id);
+			return { embeds: [this._createEmbed(0x0099FF, '👋 음성 지원을 종료하고, 채널을 떠납니다.')] };
+		}
+		return { content: '해당 봇은 음성 채널에 연결된 상태가 아닙니다.', flags: MessageFlags.Ephemeral };
+	}
+
+	/**
+	 * @desc 안내 메세지 생성
+	 * @private
+	 */
+	_createEmbed(color, description) {
+		return new EmbedBuilder()
+			.setColor(color)
+			.setDescription(`**${description}**`);
 	}
 }

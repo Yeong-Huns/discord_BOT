@@ -22,9 +22,11 @@ const PAGE_SIZE = 20; /* 한 페이지 이모지 갯수 */
 export class SelectEmojiService {
 	/**
 	 * @param {import('discord.js').Interaction} interaction
+	 * @param {{animated?: boolean}} [options] animated: true 면 GIF 이모지만 출력
 	 */
-	constructor(interaction) {
+	constructor(interaction, { animated = false } = {}) {
 		this.interaction = interaction;
+		this.animated = animated;
 		this.emojis = [];
 	}
 
@@ -35,7 +37,10 @@ export class SelectEmojiService {
 		await this._fetchAndFilterEmojis();
 
 		if (this.emojis.length === 0) {
-			await this.interaction.reply({ content: '❌ 서버에 등록된 이모지가 없습니다.', flags: MessageFlags.Ephemeral });
+			await this.interaction.reply({
+				content: `❌ 서버에 등록된 ${this.animated ? 'GIF ' : ''}이모지가 없습니다.`,
+				flags: MessageFlags.Ephemeral
+			});
 			return;
 		}
 
@@ -115,12 +120,12 @@ export class SelectEmojiService {
 	}
 
 	/**
-	 * 정적 이모지 필터링
+	 * 정적 / GIF 이모지 필터링
 	 * @private
 	 */
 	async _fetchAndFilterEmojis() {
 		const emojiList = await this.interaction.guild.emojis.fetch();
-		this.emojis = Array.from(emojiList.filter(emoji => !emoji.animated).values());
+		this.emojis = Array.from(emojiList.filter(emoji => emoji.animated === this.animated).values());
 	}
 
 	/**

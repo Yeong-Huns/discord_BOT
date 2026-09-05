@@ -11,9 +11,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import {Client, Collection, EmbedBuilder, Events, GatewayIntentBits, Partials} from "discord.js";
-import {filterEmojis, filterUrls, limitRepeatingCharacters} from "./legacy/filter.js";
-import {connectToVoiceChannel, disconnectFromVoiceChannel, processQueue, voiceConnections} from "./legacy/ttsHandler.js"
-import selectGifCommand from "./legacy/selectgif.js";
+import {filterEmojis, filterUrls, limitRepeatingCharacters} from "./utils/filter.js";
+import {disconnectFromVoiceChannel, processQueue, voiceConnections} from "./commands/service/tts.service.js"
 import {detectEmojis} from "./legacy/autoEmoji.js";
 import fs from "fs";
 import path from "path";
@@ -62,25 +61,7 @@ client.on('messageCreate', async (message) => {
 	if (!message.content || message.attachments.size > 0) return; // 이미지, 파일 무시
 	await detectEmojis(message);
 	if (message.content === '-만든놈') message.channel.send('김영훈');
-	if (message.content === '-핑') message.channel.send('퐁!');
 	if (message.content === '-인사') message.channel.send('안녕하세요! 헤실봇 인사 테스트입니다!');
-	else if (message.content === '-gif') {
-		await selectGifCommand.execute(message);
-		return;
-	}
-
-	const commands = ['-음성', '-TTS', '-기계성대'];
-	if (commands.includes(message.content)) {
-		const voiceChannel = message.member.voice.channel;
-		if (!voiceChannel) {
-			return message.reply('음성 채널에 입장 후 명령어를 입력해주세요.');
-		}
-
-		if (!voiceConnections[voiceChannel.id]) {
-			connectToVoiceChannel(voiceChannel, message);
-		}
-		return;
-	}
 
 	const voiceChannel = message.member.voice.channel;
 	if (voiceChannel && voiceConnections[voiceChannel.id] && !message.author.bot) {
@@ -90,16 +71,6 @@ client.on('messageCreate', async (message) => {
 			text = filterUrls(text);
 			voiceConnections[voiceChannel.id].messageQueue.push({message, text});
 			if (!voiceConnections[voiceChannel.id].isPlaying) processQueue(voiceChannel.id, client);
-		}
-	}
-
-	if (message.content === '-종료' || message.content === '-나가' || message.content === '-그만') {
-		const voiceChannel = message.member.voice.channel;
-		if (voiceChannel && voiceConnections[voiceChannel.id]) {
-			disconnectFromVoiceChannel(voiceChannel.id);
-			message.reply('음성 지원을 종료하고, 채널을 떠납니다.');
-		} else {
-			message.reply('해당 봇은 음성 채널에 연결된 상태가 아닙니다.');
 		}
 	}
 });
